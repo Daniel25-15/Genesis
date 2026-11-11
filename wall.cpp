@@ -28,8 +28,8 @@ Wall::Wall(Vector3 pos, float size, int w, int l, int h, int identifier) {
         }
     }
 }
-void Wall::Draw(Model& cubeModel, Model& metalModel) {
+void Wall::Draw(Model& cubeModel, Model& metalModel, Model& metalGrate, Model& wallModel, Model& windowModel) {
     for (Block& b : blocks) {
-        b.Draw(cubeModel, metalModel);
+        b.Draw(cubeModel, metalModel, metalGrate, wallModel, windowModel);
     }
 }

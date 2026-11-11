@@ -11,5 +11,5 @@ public:
     int id;
     Block(Vector3 pos, float s, int identifier, Color c);
     BoundingBox GetBoundingBox() const;
-    void Draw(Model& cubeModel, Model& metalModel);
+    void Draw(Model& cubeModel, Model& metalModel, Model& metalGrate, Model& wallModel, Model& windowModel);
 };

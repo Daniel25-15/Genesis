@@ -15,6 +15,6 @@ public:
     BoundingBox bounds;
     std::vector<Block> blocks;
     Wall(Vector3 pos, float size, int w, int l, int h, int identifier);
-    void Draw(Model& cubeModel, Model& metalModel);
+    void Draw(Model& cubeModel, Model& metalModel, Model& metalGrate, Model& wallModel, Model& windowModel);
     BoundingBox GetBoundingBox() const { return bounds; }
 };

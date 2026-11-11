@@ -14,6 +14,7 @@
 std::vector<Block> allBlocks;
 std::vector<chunk> worldChunks;
 std::vector<Wall> allWalls;
+std::vector<BoundingBox> allColiders;
 // std::vector
 
 class Item{
@@ -40,6 +41,9 @@ int buildObject() {
     allBlocks.push_back(Block((Vector3){ -2.0f, 2.5f, 2.0f }, 1.0f, 1, BLUE));
     allBlocks.push_back(Block((Vector3){ -5.0f, 2.5f, 2.0f }, 1.0f, 2, BLUE));
     allBlocks.push_back(Block((Vector3){ -2.0f, 2.5f, 4.0f }, 1.0f, 2, BLUE));
+    allBlocks.push_back(Block((Vector3){ 0.0f, 6.5f, 3.0f }, 1.0f, 4, BLUE));
+    allBlocks.push_back(Block((Vector3){ -2.0f, 6.0f, 1.0f }, 1.0f, 5, BLUE));
+
 
     return 0;
 }
@@ -49,6 +53,46 @@ int buildBuilding() {
     allWalls.push_back(Wall((Vector3) {5.0f, 1.0f, 14.0f}, 1.0f, 1, 8, 3, 1));
     allWalls.push_back(Wall((Vector3) {5.0f, 1.0f, 6.0f}, 1.0f, 8, 1, 3, 1));
     allWalls.push_back(Wall((Vector3) {12.0f, 1.0f, 6.0f}, 1.0f, 8, 1, 3, 1));
+
+    return 0;
+}
+
+int buildColliders() {
+    allColiders.clear();
+    size_t totalBlocks = allBlocks.size();
+
+    for (const auto& wall : allWalls) {
+        totalBlocks += wall.blocks.size();
+    }
+    for (const auto& c : worldChunks) {
+        totalBlocks += c.blocks.size();
+    }
+
+    allColiders.reserve(totalBlocks);
+
+    for (const auto& wall : allWalls) {
+        for (const auto& b : wall.blocks) {
+            allColiders.push_back(b.GetBoundingBox());
+        }
+    }
+    for (const auto& chunk : worldChunks) {
+        for (const auto& c: chunk.blocks) {
+            allColiders.push_back(c.GetBoundingBox());
+        }
+    }
+        for (const auto& b : allBlocks) {
+        allColiders.push_back(b.GetBoundingBox());
+    }
+
+    // for (const auto& wall : allWalls) {
+    //     for (const auto& b: wall.blocks) {
+    //         allColiders.push_back(b.GetBoundingBox());
+    //     }
+    // }
+
+
+
+
 
     return 0;
 }
@@ -75,6 +119,9 @@ int main(int argc, char* argv[]) {
     if (blockTextures[1].id == 0) {TraceLog(LOG_ERROR, "Failed to load asset: stoneTexture (stone.png)");std::cout<<"Failed to load asset:(stone.png)"<<std::endl;};
     Model cubeModel = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
     Model metalModel = LoadModel("assets/metalModel.glb");
+    Model metalGrate = LoadModel("assets/metalGrate.glb");
+    Model wallModel = LoadModel("assets/brickWall.glb");
+    Model windowModel = LoadModel("assets/windowWall.glb");
     Model pistolModel = LoadModel("assets/pistolModel.glb");
     cubeModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = blockTextures[0];
 
@@ -96,18 +143,24 @@ int main(int argc, char* argv[]) {
     buildObject();
     buildBuilding();
 
+
+
     // chunk mainChunk((Vector3) {-2.0f, 5.0f, 0.0f}, 1.0f, 4, 4);
-    worldChunks.push_back(chunk((Vector3) {-8.0f, 0.0f, -8.0f}, 1.0f, 32, 32));
-    worldChunks.push_back(chunk((Vector3) {-40.0f, 0.0f, -40.0f}, 1.0f, 32, 32));
-    worldChunks.push_back(chunk((Vector3) {-8.0f, 0.0f, -40.0f}, 1.0f, 32, 32));
-    worldChunks.push_back(chunk((Vector3) {-40.0f, 0.0f, -8.0f}, 1.0f, 32, 32));
+    worldChunks.push_back(chunk((Vector3) {-8.0f, 0.0f, -8.0f}, 1.0f, 64, 64, 0, "assets/heightmap2.png"));
+    worldChunks.push_back(chunk((Vector3) {-10.0f, 0.0f, -72.0f}, 1.0f, 64, 64, -90, "assets/heightmap2.png"));
+
+    buildColliders();
+
+    // worldChunks.push_back(chunk((Vector3) {-40.0f, 0.0f, -40.0f}, 1.0f, 32, 32, "assets/heightmap2.png"));
+    // worldChunks.push_back(chunk((Vector3) {-8.0f, 0.0f, -40.0f}, 1.0f, 32, 32, "assets/heightmap2.png"));
+    // worldChunks.push_back(chunk((Vector3) {-40.0f, 0.0f, -8.0f}, 1.0f, 32, 32, "assets/heightmap2.png"));
 
     // allWalls.push_back(Wall((Vector3) {-8.0f, 0.0f, -8.0f}, 1.0f, 32, 32));
     // worldChunks.push_back(chunk((Vector3) {-7.0f, 5.0f, 0.0f}, 1.0f, 4, 4));
 
     // allWalls.push_back(Wall((Vector3) {5.0f, 1.0f, 5.0f}, 1.0f, 1, 1, 1, 1));
 
-    Player player((Vector3) {0.0f, 3.5f, 0.0f }, (Vector3) { 0.8f, standingHeight, 0.8f }, BLUE);
+    Player player((Vector3) { 0.0f, 6.5f, 0.0f }, (Vector3) { 0.8f, standingHeight, 0.8f }, BLUE);
 
     Item weapon((Vector3){player.position.x, player.position.y, player.position.z}, 0.2f, WHITE, pistolModel);
 
@@ -134,11 +187,7 @@ int main(int argc, char* argv[]) {
 
         bool queueCrouch = IsKeyDown(KEY_C);
 
-        std::vector<BoundingBox> allColiders;
-        for (const auto& wall : allWalls) {for (const auto& b: wall.blocks) {allColiders.push_back(b.GetBoundingBox());}}
-        for (const auto& chunk : worldChunks) for (const auto& c: chunk.blocks) {allColiders.push_back(c.GetBoundingBox());}
-        for (const auto& b : allBlocks) {allColiders.push_back(b.GetBoundingBox());}
-
+        
         BoundingBox overheadCheck = {
             { player.position.x - (player.size.x / 2.0f), player.position.y + crouchingHeight, player.position.z - (player.size.z / 2.0f) },
             { player.position.x + (player.size.x / 2.0f), player.position.y + standingHeight, player.position.z + (player.size.z / 2.0f) },
@@ -175,6 +224,7 @@ int main(int argc, char* argv[]) {
             if (IsKeyDown(KEY_D)) {movement.x -= right.x * speed; movement.z -= right.z * speed; }
             if (IsKeyDown(KEY_SPACE) && player.isOnGround && !blockedAbove) {player.velocityY = 0.25f; player.isOnGround = false;}
             if (IsKeyPressed(KEY_ONE)) {player.currentItemNumber = 1;}if (IsKeyPressed(KEY_TWO)) {player.currentItemNumber = 2;}if (IsKeyPressed(KEY_THREE)) {player.currentItemNumber = 3;}if (IsKeyPressed(KEY_FOUR)) {player.currentItemNumber = 4;}if (IsKeyPressed(KEY_FIVE)) {player.currentItemNumber = 5;}if (IsKeyPressed(KEY_SIX)) {player.currentItemNumber = 6;}if (IsKeyPressed(KEY_SEVEN)) {player.currentItemNumber = 7;}if (IsKeyPressed(KEY_EIGHT)) {player.currentItemNumber = 8;}if (IsKeyPressed(KEY_NINE)) {player.currentItemNumber = 9;}
+            if (IsKeyPressed(KEY_R)) {player.position = (Vector3) { 0.0f, 5.5f, 0.0f };}
         }
 
         player.Move(movement, allColiders);
@@ -236,10 +286,10 @@ int main(int argc, char* argv[]) {
                     // } else if (b.id == 2) {
                     //      b.Draw(metalModel, metalModel);
                     // }
-                    b.Draw(cubeModel, metalModel);
+                    b.Draw(cubeModel, metalModel, metalGrate, wallModel, windowModel);
                 }
-                for (chunk& c : worldChunks) {c.Draw(cubeModel, metalModel);}
-                for (Wall& w : allWalls) {w.Draw(cubeModel, metalModel);}
+                for (chunk& c : worldChunks) {c.Draw(cubeModel, metalModel, metalGrate, wallModel, windowModel);}
+                for (Wall& w : allWalls) {w.Draw(cubeModel, metalModel, metalGrate, wallModel, windowModel);}
                 // player.Draw();
                 player.Wireframe();
                 if (player.currentItemNumber == 1) {weapon.Draw((Vector3) {0.0f, 0.5f, 0.0f }, weaponYaw);}
@@ -281,12 +331,16 @@ int main(int argc, char* argv[]) {
         DrawText(TextFormat("Vector Cordinates: { %.2f, %.2f, %.2f }", player.position.x, player.position.y, player.position.z), 10, 130, 17, BLACK);
         DrawText(TextFormat("Entities: %i", allColiders.size()), 10, 150, 20, BLACK);
         DrawText(TextFormat("Game Paused: %s", gamePaused ? "True" : "False"), 10, 170, 20, BLACK);
-        DrawText(TextFormat("Dev Build Number 0.03 - NOT COMPLETE"), 10, 10, 20, BLACK);
+        DrawText(TextFormat("Dev Build Number 0.05 - NOT COMPLETE"), 10, 10, 20, BLACK);
 
     EndDrawing();
     }
+    for (chunk& c : worldChunks) {c.Unload();}
     UnloadModel(cubeModel);
     UnloadModel(metalModel);
+    UnloadModel(metalGrate);
+    UnloadModel(wallModel);
+    UnloadModel(windowModel);
     UnloadTexture(blockTextures[0]);
     UnloadTexture(blockTextures[1]);
     UnloadTexture(crosshairTexture);

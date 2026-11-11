@@ -20,7 +20,7 @@ BoundingBox Block::GetBoundingBox() const {
     }
     
 }
-void Block::Draw(Model& model, Model& metalModel) {
+void Block::Draw(Model& model, Model& metalModel, Model& metalGrate, Model& wallModel, Model& windowModel) {
         // Texture2D blockTexture = LoadTexture("assets/grass.png");
         // Texture2D stoneTexture = LoadTexture("assets/blocks.png");
         // model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = stoneTexture;
@@ -38,13 +38,21 @@ void Block::Draw(Model& model, Model& metalModel) {
         if (id == 2) {
             DrawModel(metalModel, position, 0.175f, WHITE);
             // DrawCubeWires(cubePos, size, size, size, BLACK);
-        } 
+        } else if (id == 3) {
+            DrawModel(metalGrate, position, 0.175f, { 0, 0, 0, 0});
+            DrawCubeWires(position, size, size, size, BLACK);
+        } else if (id == 4) {
+            wallModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = WHITE;
+            DrawModel(wallModel, position, 0.175f, BROWN);
+        } else if (id == 5) {
+            DrawModel(windowModel, position, 0.175f, WHITE);
+        }
         else {
-            if (blockTextures[id].id > 0) {
-                model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = blockTextures[id];
-            }
+            // if (blockTextures[id].id > 0) {
+            model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = blockTextures[id];
+            // }
             DrawModel(model, cubePos, size, WHITE);
-            DrawCubeWires(cubePos, size, size, size, BLACK);
+            // DrawCubeWires(cubePos, size, size, size, BLACK);
         }
         // if (id != 2) {DrawCubeWires(cubePos, size, size, size, BLACK);}
     
