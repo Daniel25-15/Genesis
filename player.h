@@ -11,6 +11,7 @@ public:
     float velocityY = 0.0f;
     bool isOnGround = false;
     int currentItemNumber = 0;
+    float speed = 2.0;
     Player(Vector3 pos, Vector3 s, Color c);
     BoundingBox GetBoundingBox() const;
     void Move (Vector3 deltaHorizontal, const std::vector<BoundingBox>& blocks);

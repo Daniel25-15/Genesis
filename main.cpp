@@ -146,10 +146,12 @@ int main(int argc, char* argv[]) {
 
 
     // chunk mainChunk((Vector3) {-2.0f, 5.0f, 0.0f}, 1.0f, 4, 4);
-    worldChunks.push_back(chunk((Vector3) {-8.0f, 0.0f, -8.0f}, 1.0f, 64, 64, 0, "assets/heightmap2.png"));
-    worldChunks.push_back(chunk((Vector3) {-10.0f, 0.0f, -72.0f}, 1.0f, 64, 64, -90, "assets/heightmap2.png"));
+    worldChunks.push_back(chunk((Vector3) {0.0f, 0.0f, 0.0f}, 1.0f, 64, 64, 0, "assets/heightmap2.png"));
+    worldChunks.push_back(chunk((Vector3) {-1.0f, -1.0f, -64.0f}, 1.0f, 64, 64, -90, "assets/heightmap2.png"));
 
     buildColliders();
+
+    std::cout << "All colliders loaded: " << allColiders.size() << std::endl;
 
     // worldChunks.push_back(chunk((Vector3) {-40.0f, 0.0f, -40.0f}, 1.0f, 32, 32, "assets/heightmap2.png"));
     // worldChunks.push_back(chunk((Vector3) {-8.0f, 0.0f, -40.0f}, 1.0f, 32, 32, "assets/heightmap2.png"));
@@ -183,7 +185,7 @@ int main(int argc, char* argv[]) {
         Vector3 right = { forward.z, 0.0f, -forward.x };
         Vector3 ItemRight = { forward.y * camera.up.z - forward.z * camera.up.y, forward.z * camera.up.x - forward.x * camera.up.z, forward.x * camera.up.y - forward.y * camera.up.x};
         Vector3 movement = {0.0f, 0.0f, 0.0f };
-        float speed = 0.05f;
+        // float speed = 0.05f;
 
         bool queueCrouch = IsKeyDown(KEY_C);
 
@@ -205,7 +207,7 @@ int main(int argc, char* argv[]) {
 
         if (!gamePaused) {
             UpdateCamera(&camera, CAMERA_FIRST_PERSON);
-            if (IsKeyDown(KEY_LEFT_SHIFT) && !queueCrouch) {speed = 0.1f;} else { speed = 0.05f;};
+            if (IsKeyDown(KEY_LEFT_SHIFT) && !queueCrouch) {player.speed = 2.5f;} else { player.speed = 2.0f;};
             // if (IsKeyDown(KEY_C)) {player.size.y = 1.0f;} else {if() {player.size.y = 1.8f;}};
             if (queueCrouch || blockedAbove) {
                 if (player.size.y == standingHeight) {
@@ -218,13 +220,13 @@ int main(int argc, char* argv[]) {
                 }
                 player.size.y = standingHeight;
             };
-            if (IsKeyDown(KEY_W)) {movement.x += forward.x * speed; movement.z += forward.z * speed;}
-            if (IsKeyDown(KEY_S)) {movement.x -= forward.x * speed; movement.z -= forward.z * speed;}
-            if (IsKeyDown(KEY_A)) {movement.x += right.x * speed; movement.z += right.z * speed;}
-            if (IsKeyDown(KEY_D)) {movement.x -= right.x * speed; movement.z -= right.z * speed; }
-            if (IsKeyDown(KEY_SPACE) && player.isOnGround && !blockedAbove) {player.velocityY = 0.25f; player.isOnGround = false;}
+            if (IsKeyDown(KEY_W)) {movement.x += forward.x * player.speed; movement.z += forward.z * player.speed;}
+            if (IsKeyDown(KEY_S)) {movement.x -= forward.x * player.speed; movement.z -= forward.z * player.speed;}
+            if (IsKeyDown(KEY_A)) {movement.x += right.x * player.speed; movement.z += right.z * player.speed;}
+            if (IsKeyDown(KEY_D)) {movement.x -= right.x * player.speed; movement.z -= right.z * player.speed; }
+            if (IsKeyDown(KEY_SPACE) && player.isOnGround && !blockedAbove) {player.velocityY = 8.0f; player.isOnGround = false;}
             if (IsKeyPressed(KEY_ONE)) {player.currentItemNumber = 1;}if (IsKeyPressed(KEY_TWO)) {player.currentItemNumber = 2;}if (IsKeyPressed(KEY_THREE)) {player.currentItemNumber = 3;}if (IsKeyPressed(KEY_FOUR)) {player.currentItemNumber = 4;}if (IsKeyPressed(KEY_FIVE)) {player.currentItemNumber = 5;}if (IsKeyPressed(KEY_SIX)) {player.currentItemNumber = 6;}if (IsKeyPressed(KEY_SEVEN)) {player.currentItemNumber = 7;}if (IsKeyPressed(KEY_EIGHT)) {player.currentItemNumber = 8;}if (IsKeyPressed(KEY_NINE)) {player.currentItemNumber = 9;}
-            if (IsKeyPressed(KEY_R)) {player.position = (Vector3) { 0.0f, 5.5f, 0.0f };}
+            if (IsKeyPressed(KEY_R)) {player.position = (Vector3) { 0.0f, 6.5f, 0.0f };}
         }
 
         player.Move(movement, allColiders);
@@ -327,7 +329,7 @@ int main(int argc, char* argv[]) {
         DrawText(TextFormat("X: %.3f", player.position.x), 10, 50, 20, BLACK);
         DrawText(TextFormat("Z: %.3f", player.position.z), 10, 70, 20, BLACK);
         DrawText(TextFormat("Y: %.3f", player.position.y), 10, 90, 20, BLACK);
-        DrawText(TextFormat("Speed: %.2f", speed), 10, 110, 20, BLACK);
+        DrawText(TextFormat("Speed: %.2f", player.speed), 10, 110, 20, BLACK);
         DrawText(TextFormat("Vector Cordinates: { %.2f, %.2f, %.2f }", player.position.x, player.position.y, player.position.z), 10, 130, 17, BLACK);
         DrawText(TextFormat("Entities: %i", allColiders.size()), 10, 150, 20, BLACK);
         DrawText(TextFormat("Game Paused: %s", gamePaused ? "True" : "False"), 10, 170, 20, BLACK);

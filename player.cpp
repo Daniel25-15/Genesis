@@ -12,7 +12,7 @@ BoundingBox Player::GetBoundingBox() const {
     };
 }
 void Player::Move (Vector3 deltaHorizontal, const std::vector<BoundingBox>& blocks) {
-    position.x += deltaHorizontal.x;
+    position.x += deltaHorizontal.x * speed * GetFrameTime();
     BoundingBox playerBox = GetBoundingBox();
     for (const auto& block : blocks) {
         if (CheckCollisionBoxes(playerBox, block)) {
@@ -26,7 +26,7 @@ void Player::Move (Vector3 deltaHorizontal, const std::vector<BoundingBox>& bloc
             break;
         }
     }
-    position.z += deltaHorizontal.z;
+    position.z += deltaHorizontal.z * speed * GetFrameTime();
     playerBox = GetBoundingBox();
     for (const auto& block : blocks) {
         if (CheckCollisionBoxes(playerBox, block)) {
@@ -40,16 +40,18 @@ void Player::Move (Vector3 deltaHorizontal, const std::vector<BoundingBox>& bloc
             break;
         }
     }
-    velocityY -= 0.015f;
-    position.y += velocityY;
+    float gravity = 25.0f;
+    velocityY -= gravity * GetFrameTime();
+    position.y += velocityY * GetFrameTime();
 
     isOnGround = false;
     for (const auto& block : blocks) {
         BoundingBox playerBox = GetBoundingBox();
         if (CheckCollisionBoxes(playerBox, block)) {
             if (velocityY <= 0.0f) {
-                float playerBottom = (position.y - velocityY) - (size.y / 2.0f);
-                if (playerBottom <= block.max.y + 0.2f && playerBottom >= block.max.y - 0.5f) {
+                // float playerBottom = 
+                float playerBottom = playerBox.min.y;
+                if (playerBottom <= block.max.y && (playerBottom - velocityY * GetFrameTime()) >= block.max.y - 0.5f) {
                     // bool xBounds = (position.x + (size.x / 2.0f) > block.min.x) && (position.x - (size.x / 2.0f) < block.max.x);
                     // bool zBounds = (position.z + (size.z / 2.0f) > block.min.z) && (position.z - (size.x / 2.0f) < block.max.z);
 
@@ -61,7 +63,7 @@ void Player::Move (Vector3 deltaHorizontal, const std::vector<BoundingBox>& bloc
                 }
             }
             else if (velocityY > 0.0f) {
-                position.y = block.min.y - (size.y / 2);
+                position.y = block.min.y - (size.y / 2.0f);
                 velocityY = 0.0f;
                 break;
             }
