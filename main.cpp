@@ -10,12 +10,15 @@
 #include "chunk.h"
 #include "player.h"
 #include "wall.h"
+#include "follower.h"
 
 std::vector<Block> allBlocks;
 std::vector<chunk> worldChunks;
 std::vector<Wall> allWalls;
 std::vector<BoundingBox> allColiders;
 // std::vector
+
+
 
 class Item{
 public:
@@ -43,6 +46,9 @@ int buildObject() {
     allBlocks.push_back(Block((Vector3){ -2.0f, 2.5f, 4.0f }, 1.0f, 2, BLUE));
     allBlocks.push_back(Block((Vector3){ 0.0f, 6.5f, 3.0f }, 1.0f, 4, BLUE));
     allBlocks.push_back(Block((Vector3){ -2.0f, 6.0f, 1.0f }, 1.0f, 5, BLUE));
+
+    worldChunks.push_back(chunk((Vector3) {0.0f, 0.0f, 0.0f}, 1.0f, 64, 64, 0, "assets/heightmap2.png"));
+    worldChunks.push_back(chunk((Vector3) {-1.0f, -1.0f, -64.0f}, 1.0f, 64, 64, -90, "assets/heightmap2.png"));
 
 
     return 0;
@@ -106,7 +112,8 @@ int main(int argc, char* argv[]) {
         char* dir = dirname(path);
         chdir(dir);
     }
-    InitWindow(800, 450, "Game Window");
+    InitWindow(1475, 775, "Genesis");
+
     SetTargetFPS(60);
 
     SetExitKey(KEY_Q);    
@@ -115,6 +122,7 @@ int main(int argc, char* argv[]) {
     blockTextures[1] = LoadTexture("assets/blocks.png");
     
     Texture2D crosshairTexture = LoadTexture("assets/crosshair.png");
+    Texture2D healthBarTexture = LoadTexture("assets/healthBar.png");
     if (blockTextures[0].id == 0) {TraceLog(LOG_ERROR, "Failed to load asset: blockTexture (grass.png)");std::cout<<"Failed to load asset:(grass.png)"<<std::endl;};
     if (blockTextures[1].id == 0) {TraceLog(LOG_ERROR, "Failed to load asset: stoneTexture (stone.png)");std::cout<<"Failed to load asset:(stone.png)"<<std::endl;};
     Model cubeModel = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
@@ -123,9 +131,12 @@ int main(int argc, char* argv[]) {
     Model wallModel = LoadModel("assets/brickWall.glb");
     Model windowModel = LoadModel("assets/windowWall.glb");
     Model pistolModel = LoadModel("assets/pistolModel.glb");
+    Model followerModel = LoadModel("assets/follower.glb");
     cubeModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = blockTextures[0];
 
     bool gamePaused = false;
+
+    bool weaponFired = false;
 
     float standingHeight = 1.8f;
     float crouchingHeight = 1.2f;
@@ -138,6 +149,7 @@ int main(int argc, char* argv[]) {
 
     Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
 
+
     int cameraMode = CAMERA_FREE;
 
     buildObject();
@@ -146,9 +158,6 @@ int main(int argc, char* argv[]) {
 
 
     // chunk mainChunk((Vector3) {-2.0f, 5.0f, 0.0f}, 1.0f, 4, 4);
-    worldChunks.push_back(chunk((Vector3) {0.0f, 0.0f, 0.0f}, 1.0f, 64, 64, 0, "assets/heightmap2.png"));
-    worldChunks.push_back(chunk((Vector3) {-1.0f, -1.0f, -64.0f}, 1.0f, 64, 64, -90, "assets/heightmap2.png"));
-
     buildColliders();
 
     std::cout << "All colliders loaded: " << allColiders.size() << std::endl;
@@ -162,7 +171,9 @@ int main(int argc, char* argv[]) {
 
     // allWalls.push_back(Wall((Vector3) {5.0f, 1.0f, 5.0f}, 1.0f, 1, 1, 1, 1));
 
-    Player player((Vector3) { 0.0f, 6.5f, 0.0f }, (Vector3) { 0.8f, standingHeight, 0.8f }, BLUE);
+    Player player(Player::playerSpawnPosition, (Vector3) { 0.8f, standingHeight, 0.8f }, BLUE);
+
+    Follower Follower((Vector3) { 5.0f, 7.0f, 5.0f }, (Vector3) { 1.0f, 2.0f, 1.0f }, 100);
 
     Item weapon((Vector3){player.position.x, player.position.y, player.position.z}, 0.2f, WHITE, pistolModel);
 
@@ -209,27 +220,58 @@ int main(int argc, char* argv[]) {
             UpdateCamera(&camera, CAMERA_FIRST_PERSON);
             if (IsKeyDown(KEY_LEFT_SHIFT) && !queueCrouch) {player.speed = 2.5f;} else { player.speed = 2.0f;};
             // if (IsKeyDown(KEY_C)) {player.size.y = 1.0f;} else {if() {player.size.y = 1.8f;}};
-            if (queueCrouch || blockedAbove) {
-                if (player.size.y == standingHeight) {
-                    player.position.y -= (standingHeight - crouchingHeight) / 2.0f;
-                }
-                player.size.y = crouchingHeight;
-            } else {
-                if (player.size.y == crouchingHeight) {
-                    player.position.y += (standingHeight - crouchingHeight) / 2.0f;
-                }
-                player.size.y = standingHeight;
-            };
+            if (queueCrouch || blockedAbove) {if (player.size.y == standingHeight) {player.position.y -= (standingHeight - crouchingHeight) / 2.0f;}player.size.y = crouchingHeight;} else {if (player.size.y == crouchingHeight) {player.position.y += (standingHeight - crouchingHeight) / 2.0f;}player.size.y = standingHeight;};
             if (IsKeyDown(KEY_W)) {movement.x += forward.x * player.speed; movement.z += forward.z * player.speed;}
             if (IsKeyDown(KEY_S)) {movement.x -= forward.x * player.speed; movement.z -= forward.z * player.speed;}
             if (IsKeyDown(KEY_A)) {movement.x += right.x * player.speed; movement.z += right.z * player.speed;}
             if (IsKeyDown(KEY_D)) {movement.x -= right.x * player.speed; movement.z -= right.z * player.speed; }
             if (IsKeyDown(KEY_SPACE) && player.isOnGround && !blockedAbove) {player.velocityY = 8.0f; player.isOnGround = false;}
             if (IsKeyPressed(KEY_ONE)) {player.currentItemNumber = 1;}if (IsKeyPressed(KEY_TWO)) {player.currentItemNumber = 2;}if (IsKeyPressed(KEY_THREE)) {player.currentItemNumber = 3;}if (IsKeyPressed(KEY_FOUR)) {player.currentItemNumber = 4;}if (IsKeyPressed(KEY_FIVE)) {player.currentItemNumber = 5;}if (IsKeyPressed(KEY_SIX)) {player.currentItemNumber = 6;}if (IsKeyPressed(KEY_SEVEN)) {player.currentItemNumber = 7;}if (IsKeyPressed(KEY_EIGHT)) {player.currentItemNumber = 8;}if (IsKeyPressed(KEY_NINE)) {player.currentItemNumber = 9;}
-            if (IsKeyPressed(KEY_R)) {player.position = (Vector3) { 0.0f, 6.5f, 0.0f };}
+            if (IsKeyPressed(KEY_R)) {player.Death();}
+            if (IsKeyPressed(KEY_X)) {if (player.healthBarAmount > 0) {player.healthBarAmount -= 1;}}
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {weaponFired = true;}
         }
 
+        Vector3 followerMovement = {
+            (player.position.x - Follower.position.x),
+            0.0f,
+            (player.position.z - Follower.position.z)
+        };
+        float followerLength = sqrtf(followerMovement.x * followerMovement.x + followerMovement.z * followerMovement.z);
+        if (((player.position.y - 0.85f) > Follower.position.y) && Follower.isOnGround) {
+            Follower.velocityY = 8.0f;
+            Follower.isOnGround = false;
+        }
+        if (followerLength > 0.001f) {
+            followerMovement.x /= followerLength;
+            followerMovement.z /= followerLength;
+        }
+
+        // float hitBoxPadding = 1.0f;
+
+        // if (
+        //     player.position.x + player.size.x + hitBoxPadding <=  
+        // )
+        if (Follower.attackCooldown > 0.0f) {
+            Follower.attackCooldown -= GetFrameTime();
+            if (Follower.attackCooldown < 0.0f) {
+                Follower.attackCooldown = 0.0f;
+            }
+        }
+
+        if (CheckCollisionBoxes(player.GetBoundingBox(), Follower.GetBoundingBox()) && Follower.attackCooldown <= 0.0f) {
+            Follower.attackCooldown = Follower.attackCooldownDuration;
+            player.healthBarAmount -= 1;
+        }
+
+
         player.Move(movement, allColiders);
+
+        Follower.Move(followerMovement, allColiders);
+
+        if (player.healthBarAmount <= 0) {
+            player.Death();
+        }
 
         // weapon.position = player.position;
         // Vector3 itemPosition = {
@@ -277,6 +319,18 @@ int main(int argc, char* argv[]) {
         camera.target.z = camera.position.z + cameraViewOffest.z;
         camera.target.y = camera.position.y + cameraViewOffest.y;
 
+        float rayLength = 5.0f;
+        Vector3 rayStart = {
+            camera.position.x + (forwardFacing.x * 0.5f),
+            camera.position.y + ((forwardFacing.y * 0.5f) - 0.1f),
+            camera.position.z + (forwardFacing.z * 0.5f)
+        };
+        Vector3 rayEnd = {
+            camera.position.x + (forwardFacing.x * rayLength),
+            camera.position.y + ((forwardFacing.y * rayLength)),
+            camera.position.z + (forwardFacing.z * rayLength)
+        };
+
         BeginDrawing();
             ClearBackground(RAYWHITE);
             BeginMode3D(camera);
@@ -294,7 +348,14 @@ int main(int argc, char* argv[]) {
                 for (Wall& w : allWalls) {w.Draw(cubeModel, metalModel, metalGrate, wallModel, windowModel);}
                 // player.Draw();
                 player.Wireframe();
+                Follower.Draw(followerModel);
                 if (player.currentItemNumber == 1) {weapon.Draw((Vector3) {0.0f, 0.5f, 0.0f }, weaponYaw);}
+                if (weaponFired) {
+                    if (player.currentItemNumber == 1) {
+                        DrawCylinderEx(rayStart, rayEnd, 0.02f, 0.02f, 4, RED);
+                        weaponFired = false;
+                    }
+                }
             EndMode3D();
             Rectangle quitButton = { (float)(GetScreenWidth() / 2) - 50, (float)(GetScreenHeight() / 2) - 30, 100.0f, 40.0f };
             Rectangle resumeButton = { (float)(GetScreenWidth() / 2) - 50, (float)(GetScreenHeight() / 2) - 80, 100.0f, 40.0f };
@@ -306,7 +367,6 @@ int main(int argc, char* argv[]) {
             if (isHoveringResume && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && gamePaused) {gamePaused = false; DisableCursor();}
             Color quitButtonColor = isHoveringQuit ? LIGHTGRAY : DARKGRAY;
             Color resumeButtonColor = isHoveringResume ? LIGHTGRAY : DARKGRAY;
-
             
             if (gamePaused) {
                 int width = 300;
@@ -325,15 +385,29 @@ int main(int argc, char* argv[]) {
             int crosshairX = (GetScreenWidth() / 2) - (crosshairTexture.width / 2);
             int crosshairY = (GetScreenHeight() / 2) - (crosshairTexture.height / 2);
             if (!gamePaused) {DrawTexture(crosshairTexture, crosshairX, crosshairY, BLACK);}
+            // int healthBarX = (GetScreenWidth() * -1) + (healthBarTexture.width * 2.9);
+            // int healthBarY = (GetScreenHeight() * -1) + (healthBarTexture.height * 2.375);
+            float healthBarScale = 1.0f;
+            int healthBarX = 20;
+            int healthBarY = GetScreenHeight() - (healthBarTexture.height * healthBarScale) + 160;
+            DrawTexture(healthBarTexture, healthBarX, healthBarY, WHITE);
+            int healthValueY = GetScreenHeight() - (healthBarTexture.height / 4);
+            int healthBarHeight = 60;
+            for (int i = 0; i < player.healthBarAmount; i++) {
+                if (i == 8) {healthBarHeight -= 10;} else if (i == 9) {healthBarHeight -= 25;}
+                DrawRectangle(healthBarX + (i * 34.5) + 135, healthValueY, 20, healthBarHeight, { 25, 100, 100, 40 });
+            };
+            // std::cout << "Health Bar Y: " << healthBarY << std::endl;
         DrawText(TextFormat("FPS %i", GetFPS()), 10, 30, 20, BLACK);
         DrawText(TextFormat("X: %.3f", player.position.x), 10, 50, 20, BLACK);
         DrawText(TextFormat("Z: %.3f", player.position.z), 10, 70, 20, BLACK);
         DrawText(TextFormat("Y: %.3f", player.position.y), 10, 90, 20, BLACK);
         DrawText(TextFormat("Speed: %.2f", player.speed), 10, 110, 20, BLACK);
         DrawText(TextFormat("Vector Cordinates: { %.2f, %.2f, %.2f }", player.position.x, player.position.y, player.position.z), 10, 130, 17, BLACK);
-        DrawText(TextFormat("Entities: %i", allColiders.size()), 10, 150, 20, BLACK);
-        DrawText(TextFormat("Game Paused: %s", gamePaused ? "True" : "False"), 10, 170, 20, BLACK);
-        DrawText(TextFormat("Dev Build Number 0.05 - NOT COMPLETE"), 10, 10, 20, BLACK);
+        DrawText(TextFormat("Follower Cordinates: { %.2f, %.2f, %.2f }", Follower.position.x, Follower.position.y, Follower.position.z), 10, 150, 17, BLACK);
+        DrawText(TextFormat("Entities: %i", allColiders.size()), 10, 170, 20, BLACK);
+        DrawText(TextFormat("Game Paused: %s", gamePaused ? "True" : "False"), 10, 190, 20, BLACK);
+        DrawText(TextFormat("Dev Build Number 0.07 - NOT COMPLETE"), 10, 10, 20, BLACK);
 
     EndDrawing();
     }
@@ -343,9 +417,11 @@ int main(int argc, char* argv[]) {
     UnloadModel(metalGrate);
     UnloadModel(wallModel);
     UnloadModel(windowModel);
+    UnloadModel(followerModel);
     UnloadTexture(blockTextures[0]);
     UnloadTexture(blockTextures[1]);
     UnloadTexture(crosshairTexture);
+    UnloadTexture(healthBarTexture);
     CloseWindow();
     return 0;
 }

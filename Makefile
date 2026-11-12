@@ -8,7 +8,7 @@ LIBS = /Users/29glenn/C/raylib/src/libraylib.a \
        -framework CoreVideo \
        -framework QuartzCore
 
-SRC = main.cpp block.cpp chunk.cpp player.cpp wall.cpp
+SRC = main.cpp block.cpp chunk.cpp player.cpp wall.cpp follower.cpp
 TARGET = main
 
 all: $(TARGET)

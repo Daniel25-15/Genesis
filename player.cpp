@@ -78,3 +78,7 @@ void Player::Draw() {
 void Player::Wireframe() {
     DrawCubeWires(position, size.x, size.y, size.z, BLACK);
 }
+void Player::Death() {
+    position = playerSpawnPosition;
+    healthBarAmount = 10;
+}
