@@ -58,8 +58,13 @@ void Follower::Move(Vector3 deltaHorizontal, const std::vector<BoundingBox>& blo
         // followerBox = GetBoundingBox();
     }
 }
-void Follower::Draw(Model& model) {
-    // DrawCube(position, size.x, size.y, size.z, BLACK);
-    DrawModel(model, position, 0.3f, WHITE);
+void Follower::Draw(Model& model, Vector3 playerPosition) {
+    float deltaX = playerPosition.x - position.x;
+    float deltaZ = playerPosition.z - position.z;
+    float angle = atan2f(deltaX, deltaZ) * (180.0f / PI);
+    // angle -= 90.0f;
+    float yOffset = 0.1f;
+    Vector3 drawPosition = {position.x, position.y - yOffset, position.z};
+    DrawModelEx(model, drawPosition, (Vector3) { 0.0f, 1.0f, 0.0f }, angle, (Vector3) { 0.4f, 0.4f, 0.4f }, WHITE);
     DrawCubeWires(position, size.x, size.y, size.z, RED);
 }

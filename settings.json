@@ -1,0 +1,5 @@
+{
+    "ads-enabled": true,
+    "chunk-size": 64,
+    "fps-limiter": 60
+}

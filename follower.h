@@ -11,10 +11,10 @@ public:
     int healthAmount;
     float speed = 1.85;
     float attackCooldown = 0.0f;
-    const float attackCooldownDuration = 1.0f;
+    static constexpr float attackCooldownDuration = 1.0f;
     Follower(Vector3 pos, Vector3 s, int h);
     BoundingBox GetBoundingBox() const;
     void Move(Vector3 deltaHorizontal, const std::vector<BoundingBox>& blocks);
-    void Draw(Model& model);
+    void Draw(Model& model, Vector3 playerPosition);
     void attack();
 };
